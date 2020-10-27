@@ -197,7 +197,6 @@ class Gaussian09:
       freqs = np.array(freq_list, dtype=np.float64)
       freqs = freqs.flatten()
       freqs = np.expand_dims(freqs, axis=0)
-      print(freqs.shape)
       return freqs
 
 if __name__ == "__main__":

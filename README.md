@@ -35,5 +35,6 @@ The list of available 'prop' arguments are:
 - 'rot': Rotational constants
 - 'r2': Electronic spatial extent
 - 'e_thermal': Thermal Energies/Enthalpies/Free Energies
+- 'freqs': Vibrational frequencies
 - 'mulliken': atomic charges
 
