@@ -186,6 +186,20 @@ class Gaussian09:
       thermal_energies = thermal_energies.reshape(-1,3)
       return thermal_energies
 
+   @property
+   def get_frequencies(self):
+      freq_list = list()
+      pattern = "Frequencies "
+      for line in self.lines:
+         if pattern in line:
+            f = line.split()[-3:]
+            freq_list.append(f)
+      freqs = np.array(freq_list, dtype=np.float64)
+      freqs = freqs.flatten()
+      freqs = np.expand_dims(freqs, axis=0)
+      print(freqs.shape)
+      return freqs
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
@@ -219,6 +233,7 @@ if __name__ == "__main__":
                       'r2': g09_output.get_elec_spatial_ext,
                       'forces': g09_output.get_forces,
                       'e_thermal': g09_output.get_thermal_energies,
+                      'freqs': g09_output.get_frequencies,
                       'mulliken': g09_output.get_mulliken}
 
     if property is None or property == 'all':
