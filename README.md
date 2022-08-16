@@ -31,7 +31,7 @@ The list of available 'prop' arguments are:
 - 'e_hl': HOMO/LUMO energies
 - 'alpha': polarizability
 - 'dipole': dipole moment
-  'quadrupole': quadrupole moment
+- 'quadrupole': quadrupole moment
 - 'e_vib': Zero-point vibrational energy
 - 'rot': Rotational constants
 - 'r2': Electronic spatial extent
