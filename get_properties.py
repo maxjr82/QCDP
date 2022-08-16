@@ -73,6 +73,7 @@ class Gaussian09:
       for line in self.lines:
          if 'SCF Done' in line:
             total_energy = np.array(line.split()[4], dtype=np.float64, ndmin=2)
+            # output energy in kcal/mol
             total_energy *= 627.5096080305927
       return total_energy
 
@@ -86,19 +87,44 @@ class Gaussian09:
             break
       e_homo_lumo = np.array([e_homo, e_lumo])
       e_homo_lumo = e_homo_lumo.reshape(-1,2)
-      e_homo_lumo *= 27.211399 # convert from Hartree to eV
+      # convert from Hartree to eV
+      e_homo_lumo *= 27.211399
       return e_homo_lumo
 
    @property
    def get_dipole(self):
    #    match_number = re.compile('-?\ *[0-9]+\.?[0-9]*(?:[D]\ *-?\ *[0-9]+)?')
       scinot = re.compile('[-+]?[\d]+\.?[\d]*[Dd](?:[-+]?[\d]+)?')
+      debye_to_au = 0.393430
       for line in self.lines:
          if 'Dipole    ' in line:
             dipole = [x.replace('D','E') for x in re.findall(scinot, line)]
-            dipole = np.array(dipole, dtype=np.float64)
+            # output the dipole in Debye
+            dipole = np.array(dipole, dtype=np.float64) / debye_to_au
             dipole = dipole.reshape(1,3)
             return dipole
+
+   @property
+   def get_quadrupole(self):
+      n_dim = 3
+      quad_matrix = np.zeros((n_dim,n_dim), dtype=np.float64)
+      read_data = False
+      for line in self.lines:
+         if re.match(r"^ Quadrupole moment", line):
+            read_data = True
+            continue
+         if 'Traceless' in line:
+            break
+         if read_data:
+            m_elements = list(map(float, line.split()[1::2]))
+            if 'XX' in line:
+               np.fill_diagonal(quad_matrix, m_elements)
+            elif 'XY' in line:
+               xs, ys = np.triu_indices(n_dim,k=1)
+               quad_matrix[xs,ys] = m_elements
+               quad_matrix[ys,xs] = m_elements
+      quad_matrix = np.expand_dims(quad_matrix, axis=0)
+      return quad_matrix
 
    @property
    def get_mulliken(self):
@@ -227,6 +253,7 @@ if __name__ == "__main__":
                       'e_hl': g09_output.get_homo_lumo,
                       'alpha': g09_output.get_polarizability,
                       'dipole': g09_output.get_dipole,
+                      'quadrupole': g09_output.get_quadrupole,
                       'e_vib': g09_output.get_zpve,
                       'rot': g09_output.get_rot_constants,
                       'r2': g09_output.get_elec_spatial_ext,
@@ -236,8 +263,10 @@ if __name__ == "__main__":
                       'mulliken': g09_output.get_mulliken}
 
     if property is None or property == 'all':
-        print('Reading all properties from file: {}'.format(log_file))
-        print('-------------------------------------')
+        info = f"Reading all properties from file: {log_file}"
+        print(info)
+        print("=" * len(info))
+        print(" ")
         for k, val in all_properties.items():
            print(k, val)
     else:
@@ -254,8 +283,10 @@ if __name__ == "__main__":
                 print("The available options are", list(all_properties.keys()))
        else:
            p = property.strip()
-           print('Reading {} from file: {}'.format(p,log_file))
-           print('-------------------------------')
+           info = f"Reading {p} from file: {log_file}"
+           print(info)
+           print("=" * len(info))
+           print(" ")
            try:
                print(p, all_properties[p])
            except:
